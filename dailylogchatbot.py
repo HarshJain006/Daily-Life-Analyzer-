@@ -10,7 +10,124 @@ import time
 import speech_recognition as sr
 from groq import Groq
 
-# Set up logging for debugging
+# Set page config as the first Streamlit command
+st.set_page_config(page_title="LifeVibe Insights", layout="centered")
+
+# Custom CSS for enhanced UI with improved color scheme
+st.markdown("""
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+        
+        body {
+            background: linear-gradient(135deg, #d1e8ff 0%, #c3f8e6 100%);
+            font-family: 'Poppins', sans-serif;
+        }
+        .main {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        .main:hover {
+            transform: translateY(-5px);
+        }
+        .stRadio > label {
+            font-size: 1.1rem;
+            color: #1e293b;
+            margin-right: 1rem;
+        }
+        .stRadio > div {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+        }
+        .stButton > button {
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            border: none;
+            font-size: 1.1rem;
+            transition: transform 0.2s ease, background 0.3s ease;
+            width: 100%;
+        }
+        .stButton > button:hover {
+            transform: scale(1.05);
+            background: linear-gradient(90deg, #8b5cf6, #3b82f6);
+        }
+        .stAudio, .stFileUploader {
+            border-radius: 0.5rem;
+            border: 1px solid #d4d4d8;
+        }
+        .stMarkdown h1 {
+            color: #1e40af;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 1rem;
+            background: #eff6ff;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        .stMarkdown h2 {
+            color: #1e293b;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .stMarkdown p {
+            color: #475569;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .summary {
+            background: #e0f2fe;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #3b82f6;
+        }
+        .feedback {
+            background: #ecfdf5;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid #10b981;
+        }
+        .history {
+            background: #f5f3ff;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            border-left: 4px solid #8b5cf6;
+        }
+        .history ul {
+            list-style-type: disc;
+            padding-left: 1.5rem;
+            margin: 0;
+        }
+        .history li {
+            color: #475569;
+            margin-bottom: 0.5rem;
+        }
+        .footer {
+            text-align: center;
+            color: #6b7280;
+            margin-top: 2rem;
+            font-size: 0.9rem;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# Set up logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
@@ -80,9 +197,8 @@ def process_audio(audio, sample_rate=16000):
         logger.error(f"Error processing audio: {str(e)}")
         return None, "0.0 seconds", f"Error processing audio: {str(e)}"
 
+# Transcription function
 def transcribe_audio(audio_data):
-    """Transcribe audio using speech_recognition, processing in chunks."""
-    logger.debug(f"Type of sr: {type(sr)}")  # Debug: Check type of sr
     if audio_data is None:
         st.error("No valid audio data to transcribe.")
         return None
@@ -107,7 +223,7 @@ def transcribe_audio(audio_data):
                 with sr.AudioFile(tmpfile_name) as source:
                     audio = recognizer.record(source)
                 try:
-                    text = recognizer.recognize_google(audio, language="en-IN")  # en-IN for Indian English/Hindi mix
+                    text = recognizer.recognize_google(audio, language="en-IN")
                     if text.strip():
                         transcriptions.append(text)
                     logger.debug(f"Chunk {i+1} transcribed: {text}")
@@ -118,7 +234,7 @@ def transcribe_audio(audio_data):
                     transcriptions.append(f"Speech service error: {e}")
                     logger.error(f"Chunk {i+1}: Speech service error: {e}")
             finally:
-                for _ in range(3):  # Retry up to 3 times
+                for _ in range(3):
                     try:
                         if os.path.exists(tmpfile_name):
                             os.remove(tmpfile_name)
@@ -128,7 +244,6 @@ def transcribe_audio(audio_data):
                         logger.warning(f"Retry deleting {tmpfile_name}: {str(e)}")
                         time.sleep(0.1)
 
-        # Combine transcriptions
         if transcriptions:
             combined_text = " ".join([t for t in transcriptions if t and not t.startswith("Speech service error")])
             if combined_text.strip():
@@ -149,14 +264,18 @@ def transcribe_audio(audio_data):
         return None
 
 # Streamlit UI
-st.set_page_config(page_title="Daily Life Analyzer", layout="centered")
-st.title("🧠 Daily Life Analyzer with Groq LLM")
-st.write("Record or upload audio about your day, and get a structured analysis.")
+st.markdown('<div class="main fade-in">', unsafe_allow_html=True)
+
+# Place headline and description inside the .main div
+st.markdown("""
+    <h1>🧠 LifeVibe Insights</h1>
+    <p>Capture your day with audio and uncover insights with a vibrant analysis!</p>
+""", unsafe_allow_html=True)
 
 # Input method selection
-st.markdown("### 🎙️ Select Input Method", unsafe_allow_html=True)
+st.markdown('<h2>🎙️ Choose Your Input</h2>', unsafe_allow_html=True)
 input_method = st.radio(
-    "Choose how to provide audio:",
+    "Select input method:",
     ["record", "upload"],
     format_func=lambda x: "Record Audio" if x == "record" else "Upload Audio",
     key="input_method"
@@ -164,7 +283,7 @@ input_method = st.radio(
 
 # Audio input based on selection
 if input_method == "record":
-    st.markdown("### 🎤 Record Audio", unsafe_allow_html=True)
+    st.markdown('<h2>🎤 Record Your Day</h2>', unsafe_allow_html=True)
     recorded_audio = st.audio_input("Record audio about your day", key="audio_input")
     if recorded_audio:
         st.session_state.recorded_audio = recorded_audio.getvalue()
@@ -173,7 +292,7 @@ if input_method == "record":
             tmpfile.write(st.session_state.recorded_audio)
             y, input_sr = sf.read(tmpfile.name)
             rms = np.sqrt(np.mean(y**2))
-            st.write(f"Recorded audio RMS amplitude: {rms:.6f}")
+            st.markdown(f'<p class="fade-in">Recorded audio RMS amplitude: {rms:.6f}</p>', unsafe_allow_html=True)
             if rms < 1e-4:
                 st.warning("Warning: Recorded audio seems silent!")
             st.session_state.recorded_audio_path = tmpfile.name
@@ -184,7 +303,7 @@ if input_method == "record":
             except Exception as e:
                 logger.error(f"Error cleaning up temporary file: {str(e)}")
 else:
-    st.markdown("### 📤 Upload Audio", unsafe_allow_html=True)
+    st.markdown('<h2>📤 Upload Audio</h2>', unsafe_allow_html=True)
     uploaded_file = st.file_uploader("Upload an audio file (WAV or MP3)", type=["wav", "mp3"], key="upload")
     st.session_state.recorded_audio = None
 
@@ -215,15 +334,13 @@ if st.button("Transcribe & Analyze My Day"):
                         """
 
                         analysis_completion = client.chat.completions.create(
-                            messages=[
-                                {"role": "user", "content": analysis_prompt}
-                            ],
+                            messages=[{"role": "user", "content": analysis_prompt}],
                             model="llama-3.3-70b-versatile"
                         )
 
                         analysis = analysis_completion.choices[0].message.content
-                        st.subheader("📋 Your Day Summary")
-                        st.write(analysis)
+                        st.markdown('<h2>📋 Your Day Summary</h2>', unsafe_allow_html=True)
+                        st.markdown(f'<div class="summary">{analysis}</div>', unsafe_allow_html=True)
 
                         # Second Prompt: Suggestion and sweet message
                         feedback_prompt = f"""
@@ -236,22 +353,27 @@ if st.button("Transcribe & Analyze My Day"):
                         """
 
                         feedback_completion = client.chat.completions.create(
-                            messages=[
-                                {"role": "user", "content": feedback_prompt}
-                            ],
+                            messages=[{"role": "user", "content": feedback_prompt}],
                             model="llama-3.3-70b-versatile"
                         )
 
                         feedback = feedback_completion.choices[0].message.content
-                        st.subheader("💌 Feedback for Tomorrow")
-                        st.write(feedback)
+                        st.markdown('<h2>💌 Feedback for Tomorrow</h2>', unsafe_allow_html=True)
+                        st.markdown(f'<div class="feedback">{feedback}</div>', unsafe_allow_html=True)
                 if input_method == "record":
                     st.session_state.recorded_audio = None
     else:
         st.error("No audio input provided. Please record or upload an audio file.")
 
-# Display transcription history as bullet points
+# Display transcription history
 if st.session_state.transcription_history:
-    st.subheader("📜 Transcription History")
+    st.markdown('<h2>📜 Transcription History</h2>', unsafe_allow_html=True)
+    history_html = '<div class="history"><ul>'
     for text in st.session_state.transcription_history:
-        st.markdown(f"- {text}")
+        history_html += f'<li>{text}</li>'
+    history_html += '</ul></div>'
+    st.markdown(history_html, unsafe_allow_html=True)
+
+# Footer
+st.markdown('<p class="footer">Designed By: Harsh Jain</p>', unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
