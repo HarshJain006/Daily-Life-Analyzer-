@@ -4,3 +4,6 @@ librosa
 soundfile
 SpeechRecognition
 groq
+requests
+python-dotenv
+
