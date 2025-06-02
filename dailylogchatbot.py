@@ -9,6 +9,9 @@ import logging
 import time
 import speech_recognition as sr
 from groq import Groq
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Set page config as the first Streamlit command
 st.set_page_config(page_title="LifeVibe Insights", layout="centered")
@@ -136,8 +139,10 @@ recognizer = sr.Recognizer()
 recognizer.energy_threshold = 300
 recognizer.dynamic_energy_threshold = True
 
+
 # Initialize Groq client
-client = Groq(api_key="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")  # Replace with your actual Groq API key
+client = Groq(api_key=os.getenv("GROQ_API_KEY"),) # Replace with your actual Groq API key
+
 
 # Initialize session state
 if not hasattr(st.session_state, 'initialized'):
@@ -377,3 +382,7 @@ if st.session_state.transcription_history:
 # Footer
 st.markdown('<p class="footer">Designed By: Harsh Jain</p>', unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
+
+
+
+ 
