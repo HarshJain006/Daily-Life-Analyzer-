@@ -340,7 +340,7 @@ if st.button("Transcribe & Analyze My Day"):
 
                         analysis_completion = client.chat.completions.create(
                             messages=[{"role": "user", "content": analysis_prompt}],
-                            model="llama-3.3-70b-versatile"
+                            model="llama3-70b-8192"
                         )
 
                         analysis = analysis_completion.choices[0].message.content
@@ -359,7 +359,7 @@ if st.button("Transcribe & Analyze My Day"):
 
                         feedback_completion = client.chat.completions.create(
                             messages=[{"role": "user", "content": feedback_prompt}],
-                            model="llama-3.3-70b-versatile"
+                            model="llama3-70b-8192"
                         )
 
                         feedback = feedback_completion.choices[0].message.content
